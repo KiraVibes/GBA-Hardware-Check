@@ -1,0 +1,31 @@
+# Build outputs & ROM artifacts
+build/
+*.o
+*.elf
+*.bin
+*.gba
+*.sav
+
+# Portable toolchain (download via: python setup_toolchain.py)
+tools/
+
+# Local caches, editor & scratch files
+.cache/
+.vscode/
+compile_commands.json
+scratch/
+*.png
+__pycache__/
+*.pyc
+
+# Local asset-generation / debug helper scripts
+analyze_*.ps1
+build_full_midi_collection.ps1
+build_midi_both.ps1
+check_*.ps1
+check_*.py
+dump_midi.ps1
+find_proc.ps1
+generate_*.ps1
+parse_*.ps1
+test_*.ps1
