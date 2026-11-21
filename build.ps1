@@ -20,6 +20,26 @@ $SizeTool = Join-Path $ToolsDir "arm-none-eabi-size.exe"
 
 Write-Host "Compiling GBA Hardware Check..." -ForegroundColor Cyan
 
+# Ensure portable ARM GCC toolchain is available (auto-download on fresh clone)
+if (-not (Test-Path $Gcc)) {
+    $PathGcc = Get-Command "arm-none-eabi-gcc" -ErrorAction SilentlyContinue
+    if ($PathGcc) {
+        $Gcc = $PathGcc.Source
+        $Objcopy = (Get-Command "arm-none-eabi-objcopy" -ErrorAction Stop).Source
+        $SizeTool = (Get-Command "arm-none-eabi-size" -ErrorAction Stop).Source
+    } else {
+        $SetupScript = Join-Path $BaseDir "setup_toolchain.py"
+        if ((Test-Path $SetupScript) -and (Get-Command python -ErrorAction SilentlyContinue)) {
+            Write-Host "ARM GCC toolchain not found. Downloading portable xPack toolchain..." -ForegroundColor Yellow
+            & python $SetupScript
+            if ($LASTEXITCODE -ne 0) { throw "Toolchain download failed! Check internet connection or install arm-none-eabi-gcc." }
+        }
+        if (-not (Test-Path $Gcc)) {
+            throw "arm-none-eabi-gcc not found! Run 'python setup_toolchain.py' first or install arm-none-eabi-gcc on your PATH."
+        }
+    }
+}
+
 # 0. Rebuild MultiBoot client payload so multiboot_payload.h is always up to date
 $MbBuilder = Join-Path $BaseDir "build_mb_client.py"
 if ((Test-Path $MbBuilder) -and (Get-Command python -ErrorAction SilentlyContinue)) {

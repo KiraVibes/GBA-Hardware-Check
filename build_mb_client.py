@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import shutil
 
 NINTENDO_LOGO = bytes([
     0x24, 0xFF, 0xAE, 0x51, 0x69, 0x9A, 0xA2, 0x21, 0x3D, 0x84, 0x82, 0x0A, 0x84, 0xE4, 0x09, 0xAD,
@@ -18,12 +19,28 @@ NINTENDO_LOGO = bytes([
 def find_tool(tool_name):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     tools_dir = os.path.join(base_dir, "tools")
-    for root, dirs, files in os.walk(tools_dir):
-        if tool_name + ".exe" in files:
-            return os.path.join(root, tool_name + ".exe")
-        if tool_name in files:
-            return os.path.join(root, tool_name)
-    return tool_name
+    if os.path.isdir(tools_dir):
+        for root, dirs, files in os.walk(tools_dir):
+            if tool_name + ".exe" in files:
+                return os.path.join(root, tool_name + ".exe")
+            if tool_name in files:
+                return os.path.join(root, tool_name)
+    return shutil.which(tool_name)
+
+def ensure_toolchain():
+    gcc = find_tool("arm-none-eabi-gcc")
+    if gcc:
+        return gcc
+    print("[INFO] Portable ARM GCC toolchain not found. Running setup_toolchain.py...")
+    setup_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "setup_toolchain.py")
+    if os.path.exists(setup_script):
+        res = subprocess.run([sys.executable, setup_script])
+        if res.returncode == 0:
+            gcc = find_tool("arm-none-eabi-gcc")
+            if gcc:
+                return gcc
+    print("[ERROR] arm-none-eabi-gcc not found! Run 'python setup_toolchain.py' first.")
+    sys.exit(1)
 
 def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -33,8 +50,11 @@ def main():
 
     os.makedirs(build_dir, exist_ok=True)
 
-    gcc = find_tool("arm-none-eabi-gcc")
+    gcc = ensure_toolchain()
     objcopy = find_tool("arm-none-eabi-objcopy")
+    if not objcopy:
+        print("[ERROR] arm-none-eabi-objcopy not found!")
+        sys.exit(1)
 
     src_dir = os.path.join(base_dir, "src")
     crt0_src = os.path.join(mb_dir, "crt0_mb.s")

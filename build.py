@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 import glob
+import shutil
 
 # Standard 156-byte Nintendo Logo required by GBA BIOS
 NINTENDO_LOGO = bytes([
@@ -20,13 +21,30 @@ NINTENDO_LOGO = bytes([
 def find_tool(tool_name):
     # Check in tools/ directory first
     tools_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools")
-    for root, dirs, files in os.walk(tools_dir):
-        if tool_name + ".exe" in files:
-            return os.path.join(root, tool_name + ".exe")
-        if tool_name in files:
-            return os.path.join(root, tool_name)
+    if os.path.isdir(tools_dir):
+        for root, dirs, files in os.walk(tools_dir):
+            if tool_name + ".exe" in files:
+                return os.path.join(root, tool_name + ".exe")
+            if tool_name in files:
+                return os.path.join(root, tool_name)
     # Check PATH
-    return tool_name
+    return shutil.which(tool_name)
+
+def ensure_toolchain():
+    gcc = find_tool("arm-none-eabi-gcc")
+    if gcc:
+        return gcc
+    print("[INFO] Portable ARM GCC toolchain not found. Running setup_toolchain.py...")
+    setup_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "setup_toolchain.py")
+    if os.path.exists(setup_script):
+        res = subprocess.run([sys.executable, setup_script])
+        if res.returncode == 0:
+            gcc = find_tool("arm-none-eabi-gcc")
+            if gcc:
+                return gcc
+    print("[ERROR] arm-none-eabi-gcc not found!")
+    print("        Please run 'python setup_toolchain.py' (Windows) or install arm-none-eabi-gcc on your PATH.")
+    sys.exit(1)
 
 def fix_gba_header(rom_path, title="GBA HW CHECK", game_code="AGBC", maker_code="01"):
     with open(rom_path, "r+b") as f:
@@ -81,9 +99,12 @@ def main():
 
     os.makedirs(build_dir, exist_ok=True)
 
-    gcc = find_tool("arm-none-eabi-gcc")
+    gcc = ensure_toolchain()
     objcopy = find_tool("arm-none-eabi-objcopy")
     size_tool = find_tool("arm-none-eabi-size")
+    if not objcopy or not size_tool:
+        print("[ERROR] arm-none-eabi-objcopy or arm-none-eabi-size not found!")
+        sys.exit(1)
 
     print(f"Using GCC: {gcc}")
 
