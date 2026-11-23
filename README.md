@@ -73,8 +73,8 @@ Switch between submodes using **`L` / `R`**:
 
 ## Installation (Flashcart / Emulator)
 
-1. Download **`gba_hw_check.gba`** from the [Releases](../../releases) page.
-2. Copy `gba_hw_check.gba` to your micro-SD card (e.g., EZ-Flash Omega / Definitive Edition or EverDrive-GBA) or open it in **mGBA**.
+1. Download **`GBA-Hardware-Check.gba`** from the [Releases](../../releases) page.
+2. Copy `GBA-Hardware-Check.gba` to your micro-SD card (e.g., EZ-Flash Omega / Definitive Edition or EverDrive-GBA) or open it in **mGBA**.
 3. On EZ-Flash Omega, launch with **Clean Boot** (or normal boot). SRAM saves (`SRAM_V113`) and RTC (`SIIRTC_V001`) are detected automatically.
 
 ---
